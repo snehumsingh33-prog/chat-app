@@ -1,41 +1,67 @@
- let users = JSON.parse(localStorage.getItem("users")) || {};
+// Load saved data (MEMORY)
+let users = JSON.parse(localStorage.getItem("users")) || {};
 let chats = JSON.parse(localStorage.getItem("chats")) || [];
 let currentUser = localStorage.getItem("currentUser");
 
-// Register
-function register() {
-  let u = ruser.value;
-  let p = rpass.value;
-  users[u] = p;
-  localStorage.setItem("users", JSON.stringify(users));
-  alert("Registered");
+// AUTO LOGIN (memory)
+if (currentUser && window.location.pathname.includes("index.html")) {
+  window.location.href = "chat.html";
 }
 
-// Login
+// REGISTER (save in memory)
+function register() {
+  let u = document.getElementById("ruser").value.trim();
+  let p = document.getElementById("rpass").value.trim();
+
+  if (!u || !p) return alert("Enter details");
+
+  if (users[u]) return alert("User already exists");
+
+  users[u] = p;
+  localStorage.setItem("users", JSON.stringify(users));
+
+  alert("Registered Successfully");
+}
+
+// LOGIN (save session)
 function login() {
-  let u = luser.value;
-  let p = lpass.value;
+  let u = document.getElementById("luser").value.trim();
+  let p = document.getElementById("lpass").value.trim();
 
   if (users[u] === p) {
     localStorage.setItem("currentUser", u);
-    location.href = "chat.html";
+    window.location.href = "chat.html";
   } else {
-    alert("Wrong");
+    alert("Wrong Username or Password");
   }
 }
 
-// Send
-function send() {
-  let to = document.getElementById("to").value;
-  let msg = document.getElementById("msg").value;
+// LOGOUT (clear session only)
+function logout() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "index.html";
+}
 
-  chats.push({from: currentUser, to, msg});
+// SEND MESSAGE (save chat memory)
+function send() {
+  let to = document.getElementById("to").value.trim();
+  let msg = document.getElementById("msg").value.trim();
+
+  if (!to || !msg) return;
+
+  chats.push({
+    from: currentUser,
+    to: to,
+    msg: msg,
+    time: new Date().toLocaleString()
+  });
+
   localStorage.setItem("chats", JSON.stringify(chats));
 
   showChat();
 }
 
-// Show chat
+// SHOW CHAT (load memory)
 function showChat() {
   let box = document.getElementById("chatBox");
   if (!box) return;
@@ -45,11 +71,23 @@ function showChat() {
   chats.forEach(c => {
     if (c.from === currentUser || c.to === currentUser) {
       let div = document.createElement("div");
+
       div.className = "msg " + (c.from === currentUser ? "sent" : "received");
-      div.innerText = c.from + ": " + c.msg;
+
+      div.innerText =
+        c.from + ": " + c.msg + " (" + c.time + ")";
+
       box.appendChild(div);
     }
   });
 }
 
+// CLEAR CHAT (optional memory control)
+function clearChat() {
+  chats = [];
+  localStorage.setItem("chats", JSON.stringify(chats));
+  showChat();
+}
+
+// LOAD CHAT ON PAGE OPEN
 showChat();
